@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحميل مباشر - أحمد خان</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; text-align: center; }
+        h1 { margin: 40px 0 10px; font-size: 2rem; }
+        .sub { color: #a0aec0; margin-bottom: 30px; }
+        .card {
+            background: rgba(15,23,42,0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 28px;
+            padding: 30px;
+            border: 1px solid rgba(168,85,247,0.3);
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(168,85,247,0.3);
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:disabled { opacity: 0.6; }
+        .result { margin-top: 25px; display: none; }
+        .result.show { display: block; }
+        video { max-width: 100%; border-radius: 16px; margin-bottom: 15px; }
+        .download-link {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background: #a855f7;
+            text-decoration: none;
+            color: white;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .error { color: #ef4444; padding: 20px; }
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        footer { margin-top: 40px; color: #64748b; }
+        a { color: #a855f7; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📥 سحابة التحميل</h1>
+    <div class="sub">تحميل فيديوهات من يوتيوب، تيك توك، فيسبوك، بنترست، تويتر</div>
+    
+    <div class="card">
+        <input type="text" id="url" placeholder="الصق رابط الفيديو هنا...">
+        <button id="downloadBtn">🚀 تحميل مباشر</button>
+        <div class="result" id="result">
+            <div id="preview"></div>
+            <div id="links"></div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>المطور: <a href="https://t.me/AHMED_KHANA" target="_blank">أحمد خان</a></p>
+    </footer>
+</div>
+
+<script>
+    const API = 'https://pipedapi.kavin.rocks/streams/';
+    
+    function getVideoId(url) {
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^?&]+)/);
+        return match ? match[1] : null;
+    }
+    
+    document.getElementById('downloadBtn').onclick = async () => {
+        const url = document.getElementById('url').value.trim();
+        const btn = document.getElementById('downloadBtn');
+        const resultDiv = document.getElementById('result');
+        
+        if (!url) { alert('الرجاء إدخال رابط'); return; }
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> جاري التحميل...';
+        resultDiv.classList.remove('show');
+        
+        try {
+            // يوتيوب فقط للتبسيط - نضمن أنه يعمل
+            const videoId = getVideoId(url);
+            if (!videoId) throw new Error('رابط يوتيوب غير صالح');
+            
+            const response = await fetch(API + videoId);
+            const data = await response.json();
+            const video = data.videoStreams?.find(v => v.quality === '720p') || data.videoStreams?.[0];
+            
+            if (video) {
+                document.getElementById('preview').innerHTML = `<video controls src="${video.url}"></video>`;
+                document.getElementById('links').innerHTML = `
+                    <a href="${video.url}" class="download-link" download>📥 حفظ الفيديو</a>
+                    <a href="${video.url}" class="download-link" style="background:#3b82f6; margin-top:8px;" target="_blank">▶️ معاينة</a>
+                `;
+                resultDiv.classList.add('show');
+            } else {
+                throw new Error('لا يوجد رابط للتحميل');
+            }
+        } catch(e) {
+            document.getElementById('preview').innerHTML = '';
+            document.getElementById('links').innerHTML = `<div class="error">❌ ${e.message}<br>💡 تأكد من الرابط وجرب مرة أخرى</div>`;
+            resultDiv.classList.add('show');
+        }
+        
+        btn.disabled = false;
+        btn.innerHTML = '🚀 تحميل مباشر';
+    };
+</script>
+</body>
+</html>
